@@ -52,8 +52,34 @@ import {
       private readonly crypto: CryptoService,
       //private readonly tartanProcessing: TartanService,
     ) {}
+
+    @UseGuards(AuthGuard)
+    @Get('')
+    async getCurrentUser(
+      @Req() request: FastifyRequest,
+      @Res() reply: FastifyReply,
+    ) {
+      const id = request['userId']
+      const user = await this.service.user({ id })
   
-   
+      if (!user) {
+        return reply
+          .code(403)
+          .send({ statusCode: 401, message: 'Unouthorized' })
+      }
+  
+      const userData = {
+        id: user?.id,
+        email: user?.email,
+        name: user?.name,
+        verified: user?.verified,
+        authenticated: true,
+        role: user?.role,
+      }
+  
+      reply.code(200).send({ code: 200, user: userData })
+    }
+  
     @UseGuards(AdminGuard)
     @Put('/role')
     async updateRole(

@@ -42,7 +42,7 @@ services:
     networks:
       - n8n_network
 
-  app:
+  backend:
     container_name: backend
     build:
       context: ./backend
