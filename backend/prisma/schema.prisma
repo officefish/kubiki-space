@@ -1,0 +1,188 @@
+// Prisma Schema for MongoDB
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+// ----------------- Пользователи и сессии -----------------
+
+model User {
+  id String @id @default(uuid())
+  email     String     @unique
+  name      String?
+  password  String
+  verified  Boolean
+  role      Role       @default(GUEST)
+  sessions  Session[]
+  collection Collection?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+}
+
+enum Role {
+  GUEST
+  MEMBER
+  ADMIN
+}
+
+model Session {
+  id String @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  token     String   @unique
+  valid     Boolean  @default(false)
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   
+}
+
+// ----------------- Коллекции игроков -----------------
+
+model Collection {
+  id String @id @default(uuid())
+  user     User            @relation(fields: [userId], references: [id])
+  userId   String          @unique 
+  bricks   BrickInstance[]
+  sets     SetInstance[]
+
+  CollectionBrick CollectionBrick[]
+}
+
+model BrickTemplate {
+  id String @id @default(uuid())
+  name       String
+  partNumber String       @unique
+  shape      ShapeEnum
+  color      ColorEnum
+  category   CategoryEnum
+
+  BrickInstance BrickInstance[]
+
+  CollectionBrick CollectionBrick[]
+
+  SetTemplateBrick SetTemplateBrick[]
+}
+
+model BrickInstance {
+  id String @id @default(uuid())
+  collection   Collection    @relation(fields: [collectionId], references: [id])
+  collectionId String        
+  template     BrickTemplate @relation(fields: [templateId], references: [id])
+  templateId   String        
+  condition    ConditionEnum @default(NEW)
+  source       SourceEnum    @default(LOOSE)
+
+  SetInstanceBrick SetInstanceBrick[]
+}
+
+model CollectionBrick {
+  id String @id @default(uuid())
+  collection   Collection    @relation(fields: [collectionId], references: [id])
+  collectionId String        
+  template     BrickTemplate @relation(fields: [templateId], references: [id])
+  templateId   String        
+  quantity     Int           @default(1)
+
+  @@unique([collectionId, templateId])
+}
+
+// ----------------- Наборы -----------------
+
+model SetTemplate {
+  id String @id @default(uuid())
+  name      String
+  setNumber String              @unique
+  year      Int
+  theme     ThemeEnum
+
+  SetInstance SetInstance[]
+
+  SetTemplateBrick SetTemplateBrick[]
+}
+
+model SetInstance {
+  id String @id @default(uuid())
+  collection   Collection   @relation(fields: [collectionId], references: [id])
+  collectionId String       
+  template     SetTemplate  @relation(fields: [templateId], references: [id])
+  templateId   String       
+  isCompleted  Boolean      @default(false)
+
+  SetInstanceBrick SetInstanceBrick[]
+}
+
+// ----------------- Промежуточные таблицы -----------------
+
+model SetTemplateBrick {
+  id String @id @default(uuid())
+  set        SetTemplate   @relation(fields: [setId], references: [id])
+  setId      String        
+  template   BrickTemplate @relation(fields: [templateId], references: [id])
+  templateId String        
+  quantity   Int           @default(1)
+}
+
+model SetInstanceBrick {
+  id String @id @default(uuid())
+  set        SetInstance   @relation(fields: [setId], references: [id])
+  setId      String        
+  brick      BrickInstance @relation(fields: [brickId], references: [id])
+  brickId    String        
+  quantity   Int           @default(1) // Количество одинаковых кубиков в этом наборе
+}
+
+// ----------------- Перечисления -----------------
+
+enum ConditionEnum {
+  NEW
+  USED
+  DAMAGED
+  MISSING
+}
+
+enum SourceEnum {
+  LOOSE
+  FROM_SET
+  TRADE
+  OTHER
+}
+
+enum ShapeEnum {
+  BRICK_2x4
+  BRICK_1x2
+  TILE_1x2
+  ARCH
+  CONE
+  SLOPE
+}
+
+enum ColorEnum {
+  RED
+  BLUE
+  YELLOW
+  GREEN
+  BLACK
+  WHITE
+  GRAY
+}
+
+enum CategoryEnum {
+  BRICK
+  TILE
+  ARCH
+  CONE
+  PLATE
+  TECHNIC
+}
+
+enum ThemeEnum {
+  STAR_WARS
+  TECHNIC
+  CITY
+  HARRY_POTTER
+  NINJAGO
+  CREATOR
+}
