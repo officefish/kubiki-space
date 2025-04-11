@@ -8,6 +8,7 @@ import {
   Routes } from "react-router-dom"
 import Header from "./header"
 import { useGetUser } from "@/rest/getUser"
+import { WithLoader } from "@/components/loading"
 // import DashboardPage from "@/pages/dashpoard.page"
 // import SettingsPage from "@/pages/settings.page"
 // import LongPoolingPage from "@/pages/long-pooling"
@@ -26,9 +27,9 @@ const Cabinet:FC = () => {
   
 //    const { setIsEmptyPage } = useSiteStore()
 
-//   const [isLoading, 
-//     setIsLoading
-//   ] = useState(true);
+  const [isLoading, 
+    setIsLoading
+  ] = useState(true);
 
 //   useEffect(() => {
 //     setIsEmptyPage(isLoading)
@@ -40,21 +41,24 @@ const Cabinet:FC = () => {
   const { getUser } = useGetUser()
 
   const loadResources = async () => {
-    // console.log("Loading resources")
-
-    const apiRequests = [
-      getUser()
-    ];
-
-
-    Promise.all([...apiRequests],).then(() => {
-      //setIsLoading(false)
-      console.log('complete load resources')
-
-      //TODO: все ресурсы загружены можно выходить из прелоадера
-   })
-    
-  }
+    try {
+      // Загружаем все ресурсы параллельно
+      await Promise.all([
+        getUser(),
+        //getPosts(),
+        //getSettings()
+      ]);
+  
+      // Ждём 2 секунды после загрузки
+      await new Promise(resolve => setTimeout(resolve, 2000));
+  
+      // Выключаем прелоадер
+      setIsLoading(false);
+      console.log('complete load resources');
+    } catch (error) {
+      console.error('Ошибка при загрузке ресурсов:', error);
+    }
+  };
 
   const [isPreflight, setIsPreflight] = useState(false);
 
@@ -69,7 +73,7 @@ const Cabinet:FC = () => {
   //const [isPC, setIsPC] = useState(false);
 
 return (
-//   <WithLoader isLoading={isLoading}>
+  <WithLoader isLoading={isLoading}>
     <Screen>
     <Header />
       <Content>
@@ -89,7 +93,7 @@ return (
       <Footer>
       </Footer>
     </Screen>
-//   </WithLoader>
+  </WithLoader>
 )}
 
 export default Cabinet

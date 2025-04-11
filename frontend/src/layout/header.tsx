@@ -7,7 +7,7 @@ const Header: FC  = () => {
     return <header className="flex flex-row items-start justify-between w-full">
         {/* <Navigation /> */}
         {/* <Menu /> */}
-        <div>Navigation</div>
+        <div className="text-secondary">Navigation</div>
         <div>Menu</div>
     </header>
 }
